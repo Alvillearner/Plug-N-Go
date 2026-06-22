@@ -21,9 +21,23 @@ import {
   Tag, 
   FileText,
   Save,
-  Grid
+  Grid,
+  Users as UsersIcon,
+  Ticket,
+  Percent,
+  CircleCheck,
+  UserCheck,
+  Clock,
+  LogOut,
+  Sliders,
+  DollarSign as RevIcon,
+  ShieldAlert as InventoryIcon,
+  CreditCard,
+  MailCheck,
+  BarChart3,
+  Calendar
 } from 'lucide-react';
-import { Product, Category, Brand, Banner, AdminSettings, WhatsAppOrder } from '../types';
+import { Product, Category, Brand, Banner, AdminSettings, WhatsAppOrder, Coupon, Customer, AdminUser, LoginActivityLog } from '../types';
 import { formatBDT } from '../utils';
 
 interface AdminPanelProps {
@@ -33,12 +47,22 @@ interface AdminPanelProps {
   banners: Banner[];
   orders: WhatsAppOrder[];
   settings: AdminSettings;
+  coupons: Coupon[];
+  customers: Customer[];
+  adminUsers: AdminUser[];
+  activityLogs: LoginActivityLog[];
+  currentUser: AdminUser;
   onUpdateProducts: (newProducts: Product[]) => void;
   onUpdateCategories: (newCategories: Category[]) => void;
   onUpdateBrands: (newBrands: Brand[]) => void;
   onUpdateBanners: (newBanners: Banner[]) => void;
   onUpdateSettings: (newSettings: AdminSettings) => void;
   onUpdateOrders: (newOrders: WhatsAppOrder[]) => void;
+  onUpdateCoupons: (newCoupons: Coupon[]) => void;
+  onUpdateCustomers: (newCustomers: Customer[]) => void;
+  onUpdateAdminUsers: (newUsers: AdminUser[]) => void;
+  onUpdateActivityLogs: (newLogs: LoginActivityLog[]) => void;
+  onLogout: () => void;
 }
 
 export default function AdminPanel({
@@ -48,14 +72,24 @@ export default function AdminPanel({
   banners,
   orders,
   settings,
+  coupons,
+  customers,
+  adminUsers,
+  activityLogs,
+  currentUser,
   onUpdateProducts,
   onUpdateCategories,
   onUpdateBrands,
   onUpdateBanners,
   onUpdateSettings,
-  onUpdateOrders
+  onUpdateOrders,
+  onUpdateCoupons,
+  onUpdateCustomers,
+  onUpdateAdminUsers,
+  onUpdateActivityLogs,
+  onLogout
 }: AdminPanelProps) {
-  const [activeAdminSubTab, setActiveAdminSubTab] = useState<'dashboard' | 'products' | 'categories' | 'brands' | 'banners' | 'orders' | 'settings'>('dashboard');
+  const [activeAdminSubTab, setActiveAdminSubTab] = useState<'dashboard' | 'products' | 'categories' | 'brands' | 'banners' | 'orders' | 'inventory' | 'customers' | 'coupons' | 'reports' | 'users' | 'settings'>('dashboard');
 
   // --- CRUD STATES ---
   // Product Edit modal states
@@ -287,37 +321,65 @@ export default function AdminPanel({
       <div className="mb-8 border-b border-gray-900 pb-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#0066FF]">System Console Cockpit</span>
-            <h1 className="font-display text-2xl font-black text-white sm:text-3xl uppercase tracking-wider mt-1">
-              PLUG N GO — Shop Administrator
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-[#0066FF] bg-[#0066FF]/10 px-2.5 py-1 rounded-full border border-[#0066FF]/20">Console Secure Core</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Session Protected</span>
+            </div>
+            <h1 className="font-display text-2xl font-black text-white sm:text-3xl uppercase tracking-wider mt-2 flex items-center gap-2">
+              <span>{settings.shopName}</span>
+              <span className="text-gray-500 font-normal text-xs uppercase tracking-widest pl-2 border-l border-gray-850">Workstation Portal</span>
             </h1>
+            <p className="text-[11px] text-gray-500 mt-1 font-sans">
+              Welcome, <span className="font-bold text-gray-300">{currentUser.name}</span> ({currentUser.role})
+            </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 px-3 py-1.5 text-xs font-semibold cursor-pointer transition"
+              title="Terminate Secure Session"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </div>
+
+        {/* WORKSPACE NAVIGATION - BENTO SUBTABS CHROME */}
+        <div className="mt-6">
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">Workspace Areas</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
             {[
-              { id: 'dashboard', label: 'Monitor' },
-              { id: 'products', label: 'Devices CRUD' },
+              { id: 'dashboard', label: 'Monitor Desk' },
+              { id: 'products', label: 'Products CRUD' },
               { id: 'categories', label: 'Categories' },
-              { id: 'brands', label: 'Brands list' },
-              { id: 'banners', label: 'Hero Slides' },
+              { id: 'brands', label: 'Brands List' },
+              { id: 'banners', label: 'Hero Sliders' },
+              { id: 'inventory', label: 'Inventory & Stock' },
               { id: 'orders', label: 'WhatsApp Logs' },
-              { id: 'settings', label: 'General configs' }
+              { id: 'customers', label: 'Clients Registry' },
+              { id: 'coupons', label: 'Coupons & Promos' },
+              { id: 'reports', label: 'Financial Audit' },
+              { id: 'users', label: 'Staff & Team' },
+              { id: 'settings', label: 'Advanced Config' }
             ].map((sub) => (
               <button
                 key={sub.id}
                 onClick={() => setActiveAdminSubTab(sub.id as any)}
-                className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold cursor-pointer border ${
+                className={`rounded-lg px-3 py-2 text-xs font-semibold cursor-pointer border flex flex-col items-center justify-center text-center transition gap-1 ${
                   activeAdminSubTab === sub.id
                     ? 'bg-[#0066FF] border-[#0066FF] text-white shadow-lg shadow-[#0066FF]/25'
-                    : 'bg-gray-900 border-gray-800 text-gray-400 hover:text-white hover:border-gray-700'
+                    : 'bg-gray-950 border-gray-900 text-gray-400 hover:text-white hover:border-gray-800'
                 }`}
               >
-                {sub.label}
+                <span className="font-sans font-bold tracking-tight text-[11px]">{sub.label}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
+
 
       {/* 1. DASHBOARD ANALYTICS PANEL */}
       {activeAdminSubTab === 'dashboard' && (
@@ -1110,19 +1172,573 @@ export default function AdminPanel({
               </div>
             </div>
 
+            {/* PAYMENT CONFIGURATIONS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-950 pt-5">
+              <div className="rounded-xl border border-gray-900 bg-gray-950/40 p-4 space-y-4">
+                <div className="flex items-center gap-2 border-b border-gray-900 pb-2">
+                  <CreditCard className="h-4 w-4 text-[#0066FF]" />
+                  <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Payment Gateway setup</h4>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-200 font-bold">Enable Online Gateway</p>
+                    <p className="text-[10px] text-gray-500">Enable automated checkout with dynamic card systems.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.paymentGatewayEnabled}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, paymentGatewayEnabled: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-800 bg-[#12121A] text-[#0066FF] transition"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-gray-400 block">Manual Payment Guideline banner</label>
+                  <textarea
+                    rows={2}
+                    value={settingsForm.manualPaymentInstructions}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, manualPaymentInstructions: e.target.value })}
+                    className="w-full rounded-lg border border-gray-800 bg-[#12121A] p-2.5 text-gray-200 text-[11px] font-sans"
+                  />
+                </div>
+              </div>
+
+              {/* NOTIFICATION CONFIGURATIONS */}
+              <div className="rounded-xl border border-gray-900 bg-gray-950/40 p-4 space-y-4">
+                <div className="flex items-center gap-2 border-b border-gray-900 pb-2">
+                  <MailCheck className="h-4 w-4 text-emerald-400" />
+                  <h4 className="font-bold text-white uppercase tracking-wider text-[11px]">Alerts & Notification triggers</h4>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-200 font-bold">Mail on Checkout Log</p>
+                    <p className="text-[10px] text-gray-500">Auto email administrative desk for new WhatsApp orders.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settingsForm.notifyOnNewOrder}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, notifyOnNewOrder: e.target.checked })}
+                    className="h-4 w-4 rounded border-gray-800 bg-[#12121A] text-[#0066FF] transition"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-gray-400 block font-mono">Administrative Alert inbox</label>
+                  <input
+                    type="email"
+                    value={settingsForm.notifyEmail}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, notifyEmail: e.target.value })}
+                    className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-300 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="pt-4 border-t border-gray-950 flex justify-end">
               <button
                 type="submit"
-                className="flex h-12 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-tr from-[#0066FF] to-blue-800 px-8 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-[#0066FF]/20 hover:scale-[1.01] cursor-pointer"
+                className="flex h-11 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-tr from-[#0066FF] to-blue-800 px-8 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-[#0066FF]/20 hover:scale-[1.01] cursor-pointer"
               >
-                <Save className="h-4.5 w-4.5" />
-                <span>Save general credentials</span>
+                <Save className="h-4 w-4" />
+                <span>Save advanced configurations</span>
               </button>
             </div>
           </form>
         </div>
       )}
 
+      {/* 8. INVENTORY MANAGEMENT TAB */}
+      {activeAdminSubTab === 'inventory' && (
+        <div className="space-y-6 animate-fade-in text-xs select-none">
+          <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+            <div className="border-b border-gray-900 pb-3 mb-4 flex justify-between items-center">
+              <div>
+                <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Device Stocks Ledger</h3>
+                <p className="text-[10px] text-gray-500">Real-time depletion indicators. Yellow labels represent units with stock of 5 or below.</p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-950 bg-gray-950/50 text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <th className="p-3">Device model</th>
+                    <th className="p-3">Identifier</th>
+                    <th className="p-3">Base cost</th>
+                    <th className="p-3">In Stock Status</th>
+                    <th className="p-3 text-right">Replenish Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-950">
+                  {products.map((p) => {
+                    const isLow = p.stock <= 5;
+                    return (
+                      <tr key={p.id} className="hover:bg-gray-900/10 transition">
+                        <td className="p-3 flex items-center gap-2">
+                          <img src={p.images[0]} className="h-8 w-8 rounded-md object-cover border border-gray-800" referrerPolicy="no-referrer" />
+                          <span className="font-bold text-gray-200">{p.name}</span>
+                        </td>
+                        <td className="p-3 font-mono text-[11px] text-gray-500">{p.id}</td>
+                        <td className="p-3 font-medium text-gray-300">{formatBDT(p.price)}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-mono font-bold ${
+                            isLow ? 'bg-amber-950 text-amber-400 border border-amber-800/20' : 'bg-emerald-950/50 text-emerald-400 border border-emerald-800/20'
+                          }`}>
+                            {p.stock} units available
+                          </span>
+                        </td>
+                        <td className="p-3 text-right space-x-1.5">
+                          <button
+                            onClick={() => {
+                              const updated = products.map((prod) => prod.id === p.id ? { ...prod, stock: prod.stock + 5 } : prod);
+                              onUpdateProducts(updated);
+                            }}
+                            className="bg-[#0066FF]/10 text-[#0066FF] border border-[#0066FF]/30 hover:bg-[#0066FF] hover:text-white rounded-md px-2 py-1 text-[10px] font-bold cursor-pointer transition"
+                          >
+                            +5 Restock
+                          </button>
+                          <button
+                            onClick={() => {
+                              const updated = products.map((prod) => prod.id === p.id ? { ...prod, stock: prod.stock + 20 } : prod);
+                              onUpdateProducts(updated);
+                            }}
+                            className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white rounded-md px-2 py-1 text-[10px] font-bold cursor-pointer transition"
+                          >
+                            +20 Batch
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. CUSTOMERS REGISTRY TAB */}
+      {activeAdminSubTab === 'customers' && (
+        <div className="space-y-6 animate-fade-in text-xs select-none">
+          <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+            <div className="border-b border-gray-900 pb-3 mb-4">
+              <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Registered Client Database</h3>
+              <p className="text-[10px] text-gray-500">Track order counts, dynamic spends and customer credentials.</p>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-950 bg-gray-950/50 text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <th className="p-3">Buyer info</th>
+                    <th className="p-3">Contact</th>
+                    <th className="p-3">Join Date</th>
+                    <th className="p-3">Frequencies</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-950">
+                  {customers.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-900/10 transition">
+                      <td className="p-3">
+                        <div className="font-bold text-gray-200">{c.name}</div>
+                        <div className="text-[10px] text-[#0066FF] uppercase font-mono">{c.id}</div>
+                      </td>
+                      <td className="p-3 text-gray-400">
+                        <div>{c.email}</div>
+                        <div className="font-mono text-[11px]">{c.phone}</div>
+                      </td>
+                      <td className="p-3 text-gray-400 font-mono">{c.joinDate}</td>
+                      <td className="p-3">
+                        <div className="font-bold text-white">{c.totalOrders} checkouts</div>
+                        <div className="text-emerald-500 font-medium">Spent: {formatBDT(c.totalSpend)}</div>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          localStorage.getItem(`png_cust_ban_${c.id}`) === 'true' 
+                            ? 'bg-red-950 text-red-400 border border-red-900/30' 
+                            : 'bg-emerald-950 text-emerald-400 border border-emerald-900/30'
+                        }`}>
+                          {localStorage.getItem(`png_cust_ban_${c.id}`) === 'true' ? 'Banned/Suspended' : 'Verified Active'}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        {localStorage.getItem(`png_cust_ban_${c.id}`) === 'true' ? (
+                          <button
+                            onClick={() => {
+                              localStorage.removeItem(`png_cust_ban_${c.id}`);
+                              onUpdateCustomers([...customers]); // force update trigger
+                            }}
+                            className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-emerald-500 hover:text-white transition cursor-pointer"
+                          >
+                            Unsuspend
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (confirm('Are you sure you want to suspend this user?')) {
+                                localStorage.setItem(`png_cust_ban_${c.id}`, 'true');
+                                onUpdateCustomers([...customers]); // force update trigger
+                              }
+                            }}
+                            className="bg-red-500/15 text-red-400 border border-red-500/30 px-2 py-1 rounded text-[10px] font-bold hover:bg-red-500 hover:text-white transition cursor-pointer"
+                          >
+                            Suspend
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 10. COUPON AND PROMOTIONS TAB */}
+      {activeAdminSubTab === 'coupons' && (
+        <div className="space-y-6 animate-fade-in text-xs select-none">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* ADD COUPON FORM */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 h-fit">
+              <div className="flex items-center gap-2 border-b border-gray-900 pb-3 mb-4">
+                <Ticket className="h-4.5 w-4.5 text-[#0066FF]" />
+                <h3 className="font-display font-black text-sm uppercase text-white tracking-wider">Generate Promo key</h3>
+              </div>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const code = (form.elements.namedItem('code') as HTMLInputElement).value.toUpperCase().trim();
+                const dType = (form.elements.namedItem('dType') as HTMLSelectElement).value as 'percentage' | 'fixed';
+                const dVal = Number((form.elements.namedItem('dVal') as HTMLInputElement).value);
+                const minAmt = Number((form.elements.namedItem('minAmt') as HTMLInputElement).value);
+
+                if (!code || !dVal) return;
+                
+                const exists = coupons.some(c => c.code === code);
+                if (exists) {
+                  alert('This promo code key already exists!');
+                  return;
+                }
+
+                const newCop: Coupon = {
+                  id: `coup-${Date.now()}`,
+                  code,
+                  discountType: dType,
+                  discountValue: dVal,
+                  minOrderAmount: minAmt,
+                  isActive: true
+                };
+
+                onUpdateCoupons([...coupons, newCop]);
+                form.reset();
+                alert(`Promo code ${code} initialized successfully!`);
+              }} className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Coupon code tag</label>
+                  <input name="code" required type="text" placeholder="e.g. LOYAL15" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-200 text-xs font-mono font-bold" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Deduction Method</label>
+                  <select name="dType" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3 text-gray-200 text-xs focus:outline-none">
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed BDT Deduction (৳)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Deduction Weight</label>
+                  <input name="dVal" required type="number" placeholder="Value (e.g. 10 or 500)" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-200 text-xs" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Minimum Cart Cap (৳)</label>
+                  <input name="minAmt" type="number" defaultValue="1000" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-200 text-xs" />
+                </div>
+                <button type="submit" className="w-full flex h-10 items-center justify-center gap-1 bg-[#0066FF] hover:bg-blue-600 transition tracking-wider font-bold text-white uppercase rounded-lg text-xs cursor-pointer">
+                  <Plus className="h-4 w-4" /> Activate Coupon
+                </button>
+              </form>
+            </div>
+
+            {/* COUPONS DIRECTORY */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 lg:col-span-2">
+              <div className="border-b border-gray-900 pb-3 mb-4">
+                <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Active Promotional Keys</h3>
+              </div>
+
+              <div className="space-y-3">
+                {coupons.map((c) => (
+                  <div key={c.id} className="rounded-xl border border-gray-900 bg-[#12121A] p-4 flex justify-between items-center">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-black text-white bg-[#0066FF]/10 text-[#0066FF] rounded px-2.5 py-0.5 text-xs">{c.code}</span>
+                        <span className={`h-2 w-2 rounded-full ${c.isActive ? 'bg-emerald-500' : 'bg-gray-600'}`}></span>
+                      </div>
+                      <p className="text-gray-400 text-[11px]">
+                        Benefit: <span className="text-white font-bold">{c.discountType === 'percentage' ? `${c.discountValue}%` : `৳ ${c.discountValue}`} Off</span>. 
+                        Minimum Cart threshold: <span className="font-bold">{formatBDT(c.minOrderAmount)}</span>
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const updated = coupons.map((cop) => cop.id === c.id ? { ...cop, isActive: !cop.isActive } : cop);
+                          onUpdateCoupons(updated);
+                        }}
+                        className={`px-2.5 py-1 rounded text-[10px] font-bold transition border cursor-pointer ${
+                          c.isActive 
+                            ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500 hover:text-white' 
+                            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500 hover:text-white'
+                        }`}
+                      >
+                        {c.isActive ? 'Disable' : 'Enable'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this coupon?')) {
+                            onUpdateCoupons(coupons.filter(cop => cop.id !== c.id));
+                          }
+                        }}
+                        className="p-1 rounded-md border border-red-500/30 hover:border-red-500 text-red-400 hover:bg-red-500 hover:text-white transition cursor-pointer"
+                        title="Delete Promo"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 11. SALES AND REVENUE FINANCIAL REPORTS */}
+      {activeAdminSubTab === 'reports' && (
+        <div className="space-y-6 animate-fade-in text-xs select-none">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">Simulated Sales Weight</span>
+              <div className="text-2xl font-black text-white font-display mt-1">{orders.length} Traded Orders</div>
+              <p className="text-[10px] text-emerald-500 mt-2">▲ 100% Session Tracking Efficiency</p>
+            </div>
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block font-mono">Gross session value</span>
+              <div className="text-2xl font-black text-emerald-400 font-display mt-1">
+                {formatBDT(orders.reduce((sum, o) => sum + o.totalPrice, 0))}
+              </div>
+              <p className="text-[10px] text-gray-500 mt-2">Combined subtotal logs</p>
+            </div>
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block font-mono">Simulated Net Revenue</span>
+              <div className="text-2xl font-black text-white font-display mt-1">{formatBDT(totalRevenueMock)}</div>
+              <div className="mt-2 text-[10px] text-[#0066FF] font-semibold">Verified Orders (Ready Status)</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* CHART CONTAINER BAR EXAMPLES */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+              <div className="border-b border-gray-900 pb-3 mb-4">
+                <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider flex items-center gap-1.5">
+                  <BarChart3 className="h-4 w-4 text-[#0066FF]" />
+                  <span>Interactive sales channels breakdown</span>
+                </h3>
+              </div>
+              
+              <div className="space-y-4 pt-2">
+                <div>
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-gray-300 font-bold">Mobile phones collection</span>
+                    <span className="text-emerald-400 font-mono">75% (৳ 415,500)</span>
+                  </div>
+                  <div className="w-full bg-[#12121A] h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-[#0066FF] to-blue-600 h-full rounded-full" style={{ width: '75%' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-gray-300 font-bold">Sound Hubs / Audio Acoustics</span>
+                    <span className="text-emerald-400 font-mono">15% (৳ 85,000)</span>
+                  </div>
+                  <div className="w-full bg-[#12121A] h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '15%' }}></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span className="text-gray-300 font-bold">GAN Charging & Accessories</span>
+                    <span className="text-emerald-400 font-mono">10% (৳ 12,000)</span>
+                  </div>
+                  <div className="w-full bg-[#12121A] h-2.5 rounded-full overflow-hidden">
+                    <div className="bg-amber-500 h-full rounded-full" style={{ width: '10%' }}></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 p-3 rounded-lg border border-gray-900 bg-[#12121A] text-center">
+                <span className="text-[10px] text-gray-500">SYSTEM STABILITY METRICS: EXCELLENT (99.9% COCKPIT ONLINE)</span>
+              </div>
+            </div>
+
+            {/* TOP SELLING PRODUCTS */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5">
+              <div className="border-b border-gray-900 pb-3 mb-4">
+                <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Top performing devices</h3>
+              </div>
+
+              <div className="space-y-3.5">
+                {products.slice(0, 3).map((p, idx) => (
+                  <div key={p.id} className="flex items-center justify-between border-b border-gray-950 pb-2.5 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 font-display font-black text-sm w-4">#{idx+1}</span>
+                      <img src={p.images[0]} className="h-8 w-8 rounded object-cover border border-gray-900" referrerPolicy="no-referrer" />
+                      <div>
+                        <span className="text-gray-200 font-bold block">{p.name}</span>
+                        <span className="text-[10px] text-gray-500">{p.id}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-white font-bold">{p.rating} / 5 Rating</div>
+                      <div className="text-[10px] text-[#0066FF] uppercase font-mono">{p.stock} units remain</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 12. STAFF TEAM AND LOGIN ACTIVITY SECURITY AUDIT LOGS */}
+      {activeAdminSubTab === 'users' && (
+        <div className="space-y-6 animate-fade-in text-xs select-none">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* ADD TEAM STAFF FORM */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 h-fit">
+              <div className="flex items-center gap-2 border-b border-gray-900 pb-3 mb-4">
+                <UsersIcon className="h-4.5 w-4.5 text-[#0066FF]" />
+                <h3 className="font-display font-black text-sm uppercase text-white tracking-wider">Commission team staff</h3>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const name = (form.elements.namedItem('name') as HTMLInputElement).value.trim();
+                const email = (form.elements.namedItem('email') as HTMLInputElement).value.trim();
+                const role = (form.elements.namedItem('role') as HTMLSelectElement).value as 'Super Admin' | 'Admin' | 'Staff';
+
+                if (!name || !email) return;
+
+                const exists = adminUsers.some(u => u.email === email);
+                if (exists) {
+                   alert('A workstation staff with this email address already exists!');
+                   return;
+                }
+
+                const newUser: AdminUser = {
+                  id: `user-${Date.now()}`,
+                  name,
+                  email,
+                  role,
+                  isTwoFactorEnabled: false,
+                  status: 'Active'
+                };
+
+                onUpdateAdminUsers([...adminUsers, newUser]);
+                form.reset();
+                alert(`Workstation Staff ${name} successfully appended with status keys!`);
+              }} className="space-y-4">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Full Legal Name</label>
+                  <input name="name" required type="text" placeholder="e.g. Mehedi Hasan" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-200 text-xs" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Workstation email</label>
+                  <input name="email" required type="email" placeholder="e.g. staff@loyaltech.com" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3.5 text-gray-200 text-xs font-mono" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 block mb-1">Assigned permission role</label>
+                  <select name="role" className="w-full h-10 rounded-lg border border-gray-800 bg-[#12121A] px-3 text-gray-200 text-xs focus:outline-none">
+                    <option value="Staff">Staff (Standard Logs Only)</option>
+                    <option value="Admin">Admin (Access CRUD Tools)</option>
+                    <option value="Super Admin">Super Admin (Universal Configuration Access)</option>
+                  </select>
+                </div>
+                <button type="submit" className="w-full flex h-10 items-center justify-center gap-1 bg-[#0066FF] hover:bg-blue-600 transition tracking-wider font-bold text-white uppercase rounded-lg text-xs cursor-pointer">
+                  <UserCheck className="h-4 w-4" /> Commission Staff Member
+                </button>
+              </form>
+            </div>
+
+            {/* TEAM LIST ROSTER */}
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 lg:col-span-2 space-y-6">
+              <div>
+                <div className="border-b border-gray-900 pb-3 mb-4">
+                  <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Workforce authorization list</h3>
+                </div>
+
+                <div className="space-y-2.5">
+                  {adminUsers.map((u) => (
+                    <div key={u.id} className="rounded-xl border border-gray-950 bg-[#12121A] p-3 flex justify-between items-center">
+                      <div>
+                        <div className="font-bold text-gray-200">{u.name}</div>
+                        <div className="text-[10px] text-gray-500">{u.email}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-indigo-950/40 text-indigo-400 border border-indigo-800/20 px-2 py-0.5 text-[10px] font-semibold">{u.role}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          u.status === 'Active' ? 'bg-emerald-950 text-emerald-400' : 'bg-red-950 text-red-400'
+                        }`}>{u.status}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECURITY ACTIVITY LOGS OVERVIEW */}
+              <div>
+                <div className="border-b border-gray-900 pb-2 mb-3 flex items-center gap-1.5">
+                  <Clock className="h-4.5 w-4.5 text-amber-500" />
+                  <h3 className="font-display font-bold text-xs uppercase text-gray-300 tracking-wide">Login security audit logs</h3>
+                </div>
+
+                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 text-[11px]">
+                  {activityLogs.map((log) => (
+                    <div key={log.id} className="p-2 border border-gray-950 bg-gray-950/20 rounded flex justify-between items-start">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                          <span className="font-bold text-gray-300">{log.email}</span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 leading-none">{log.userAgent} • IP: {log.ipAddress}</p>
+                      </div>
+                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                        log.status === 'Success' 
+                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/10' 
+                          : log.status === 'Failed'
+                          ? 'bg-red-950 text-red-500 border border-red-800/10'
+                          : 'bg-indigo-950 text-indigo-400 border border-indigo-800/10'
+                      }`}>
+                        {log.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

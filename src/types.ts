@@ -77,6 +77,44 @@ export interface Banner {
   link: string; // Slug or tab path
 }
 
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderAmount: number;
+  isActive: boolean;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  totalOrders: number;
+  totalSpend: number;
+  joinDate: string;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Super Admin' | 'Admin' | 'Staff';
+  isTwoFactorEnabled: boolean;
+  status: 'Active' | 'Suspended';
+}
+
+export interface LoginActivityLog {
+  id: string;
+  timestamp: string;
+  email: string;
+  status: 'Success' | 'Failed' | 'Password Reset' | 'Auto Logout (Inactivity)' | 'Manual Logout' | 'Logout';
+  ipAddress: string;
+  userAgent: string;
+  role?: string;
+}
+
 export interface AdminSettings {
   shopName: string;
   whatsappNumber: string; // e.g. "8801700000000"
@@ -86,4 +124,9 @@ export interface AdminSettings {
   logoText: string;
   seoTitle: string;
   seoDescription: string;
+  paymentGatewayEnabled: boolean;
+  manualPaymentInstructions: string;
+  notifyOnNewOrder: boolean;
+  notifyEmail: string;
+  couponUsageLimit: number;
 }

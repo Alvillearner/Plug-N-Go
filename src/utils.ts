@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Product, Category, Brand, Banner, AdminSettings, Review, WhatsAppOrder } from './types';
+import { Product, Category, Brand, Banner, AdminSettings, Review, WhatsAppOrder, Coupon, Customer, AdminUser, LoginActivityLog } from './types';
 import {
   DEFAULT_PRODUCTS,
   DEFAULT_CATEGORIES,
@@ -182,3 +182,81 @@ export function getStoredOrders(): WhatsAppOrder[] {
 export function saveStoredOrders(orders: WhatsAppOrder[]): void {
   localStorage.setItem('png_orders', JSON.stringify(orders));
 }
+
+// --- NEW SOPHISTICATED SERVICES PERSISTENCE ---
+
+export const DEFAULT_COUPONS: Coupon[] = [
+  { id: 'coup-1', code: 'LOYAL10', discountType: 'percentage', discountValue: 10, minOrderAmount: 5000, isActive: true },
+  { id: 'coup-2', code: 'FLAT500', discountType: 'fixed', discountValue: 500, minOrderAmount: 15000, isActive: true },
+  { id: 'coup-3', code: 'WELCOME', discountType: 'percentage', discountValue: 5, minOrderAmount: 1000, isActive: true }
+];
+
+export const DEFAULT_CUSTOMERS: Customer[] = [
+  { id: 'cust-1', name: 'Sadman Sakib', email: 'sadman@gmail.com', phone: '01712039485', totalOrders: 3, totalSpend: 154000, joinDate: '2026-02-14' },
+  { id: 'cust-2', name: 'Nusrat Jahan', email: 'nusrat.jahan@yahoo.com', phone: '01822394857', totalOrders: 1, totalSpend: 38500, joinDate: '2026-05-20' },
+  { id: 'cust-3', name: 'Rashedul Islam', email: 'rashed.islam@outlook.com', phone: '01911223344', totalOrders: 0, totalSpend: 0, joinDate: '2026-06-21' }
+];
+
+export const DEFAULT_ADMIN_USERS: AdminUser[] = [
+  { id: 'user-admin', name: 'Super Admin', email: 'admin@loyaltech.com', role: 'Super Admin', isTwoFactorEnabled: false, status: 'Active' },
+  { id: 'user-manager', name: 'Nayeem Islam', email: 'manager@loyaltech.com', role: 'Admin', isTwoFactorEnabled: false, status: 'Active' },
+  { id: 'user-staff', name: 'Taskin Ahmed', email: 'staff@loyaltech.com', role: 'Staff', isTwoFactorEnabled: false, status: 'Active' }
+];
+
+export const DEFAULT_ACTIVITY_LOGS: LoginActivityLog[] = [
+  { id: 'log-1', timestamp: '2026-06-21T10:14:00-07:00', email: 'admin@loyaltech.com', status: 'Success', ipAddress: '103.114.172.90', userAgent: 'Mozilla/5.0 Chrome/121.0', role: 'Super Admin' },
+  { id: 'log-2', timestamp: '2026-06-21T14:22:00-07:00', email: 'staff@loyaltech.com', status: 'Success', ipAddress: '103.114.172.92', userAgent: 'Mozilla/5.0 Safari/17.2', role: 'Staff' }
+];
+
+export function getStoredCoupons(): Coupon[] {
+  const data = localStorage.getItem('png_coupons');
+  if (data) {
+    try { return JSON.parse(data); } catch { }
+  }
+  localStorage.setItem('png_coupons', JSON.stringify(DEFAULT_COUPONS));
+  return DEFAULT_COUPONS;
+}
+
+export function saveStoredCoupons(coupons: Coupon[]): void {
+  localStorage.setItem('png_coupons', JSON.stringify(coupons));
+}
+
+export function getStoredCustomers(): Customer[] {
+  const data = localStorage.getItem('png_customers');
+  if (data) {
+    try { return JSON.parse(data); } catch { }
+  }
+  localStorage.setItem('png_customers', JSON.stringify(DEFAULT_CUSTOMERS));
+  return DEFAULT_CUSTOMERS;
+}
+
+export function saveStoredCustomers(customers: Customer[]): void {
+  localStorage.setItem('png_customers', JSON.stringify(customers));
+}
+
+export function getStoredAdminUsers(): AdminUser[] {
+  const data = localStorage.getItem('png_admin_users');
+  if (data) {
+    try { return JSON.parse(data); } catch { }
+  }
+  localStorage.setItem('png_admin_users', JSON.stringify(DEFAULT_ADMIN_USERS));
+  return DEFAULT_ADMIN_USERS;
+}
+
+export function saveStoredAdminUsers(adminUsers: AdminUser[]): void {
+  localStorage.setItem('png_admin_users', JSON.stringify(adminUsers));
+}
+
+export function getStoredActivityLogs(): LoginActivityLog[] {
+  const data = localStorage.getItem('png_activity_logs');
+  if (data) {
+    try { return JSON.parse(data); } catch { }
+  }
+  localStorage.setItem('png_activity_logs', JSON.stringify(DEFAULT_ACTIVITY_LOGS));
+  return DEFAULT_ACTIVITY_LOGS;
+}
+
+export function saveStoredActivityLogs(logs: LoginActivityLog[]): void {
+  localStorage.setItem('png_activity_logs', JSON.stringify(logs));
+}
+

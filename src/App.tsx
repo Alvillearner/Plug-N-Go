@@ -20,9 +20,17 @@ import {
   getStoredOrders, 
   saveStoredOrders,
   formatBDT,
-  getWhatsAppUrl
+  getWhatsAppUrl,
+  getStoredCoupons,
+  saveStoredCoupons,
+  getStoredCustomers,
+  saveStoredCustomers,
+  getStoredAdminUsers,
+  saveStoredAdminUsers,
+  getStoredActivityLogs,
+  saveStoredActivityLogs
 } from './utils';
-import { Product, Category, Brand, Banner, AdminSettings, Review, WhatsAppOrder, CartItem } from './types';
+import { Product, Category, Brand, Banner, AdminSettings, Review, WhatsAppOrder, CartItem, Coupon, Customer, AdminUser, LoginActivityLog } from './types';
 
 // Components
 import Navbar from './components/Navbar';
@@ -38,6 +46,8 @@ import {
   ContactView 
 } from './components/CustomerViews';
 import AdminPanel from './components/AdminPanel';
+import AdminAuth from './components/AdminAuth';
+import { Globe, ShieldAlert, Monitor, Terminal, Lock, HelpCircle, HardDriveDownload } from 'lucide-react';
 
 import { 
   Smartphone, 
@@ -65,6 +75,32 @@ export default function App() {
   const [banners, setBanners] = useState<Banner[]>(() => getStoredBanners());
   const [orders, setOrders] = useState<WhatsAppOrder[]>(() => getStoredOrders());
   const [reviews, setReviews] = useState<Review[]>(() => getStoredReviews());
+
+  // --- NEW RETRO/SOPHISTICATED SERVICES DIRECTORIES STATE ---
+  const [coupons, setCoupons] = useState<Coupon[]>(() => getStoredCoupons());
+  const [customers, setCustomers] = useState<Customer[]>(() => getStoredCustomers());
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(() => getStoredAdminUsers());
+  const [activityLogs, setActivityLogs] = useState<LoginActivityLog[]>(() => getStoredActivityLogs());
+
+  // --- COMPULSORY MULTI-APPLICATION SANDBOX SELECTOR ---
+  const [browserApp, setBrowserApp] = useState<'store' | 'admin'>('store');
+  const [browserUrl, setBrowserUrl] = useState<string>('https://www.loyaltech-electronics.com');
+
+  // --- JWT SESSION AND ACCESS STATE METRIC ---
+  const [adminSession, setAdminSession] = useState<AdminUser | null>(() => {
+    const token = localStorage.getItem('png_jwt_token');
+    const roster = getStoredAdminUsers();
+    if (token && token.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.session_')) {
+      const uid = token.split('session_')[1];
+      const match = roster.find(u => u.id === uid);
+      if (match) return match;
+    }
+    return null;
+  });
+
+  // --- AUTO INACTIVITY LOGOUT ENGINE (60 Seconds Timeout) ---
+  const [lastActivity, setLastActivity] = useState<number>(() => Date.now());
+  const [inactivityCountdown, setInactivityCountdown] = useState<number>(60);
 
   // --- INTERACTION STATES ---
   const [currentTab, setCurrentTab] = useState<string>('home');
@@ -121,6 +157,88 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('png_wishlist', JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    saveStoredCoupons(coupons);
+  }, [coupons]);
+
+  useEffect(() => {
+    saveStoredCustomers(customers);
+  }, [customers]);
+
+  useEffect(() => {
+    saveStoredAdminUsers(adminUsers);
+  }, [adminUsers]);
+
+  useEffect(() => {
+    saveStoredActivityLogs(activityLogs);
+  }, [activityLogs]);
+
+  // Sync back and forth navigation address updates
+  useEffect(() => {
+    if (browserApp === 'store') {
+      setBrowserUrl('https://www.loyaltech-electronics.com');
+    } else {
+      setBrowserUrl('https://admin.loyaltech-electronics.com');
+    }
+  }, [browserApp]);
+
+  // Track user movements for session longevity
+  useEffect(() => {
+    const resetTimer = () => {
+      setLastActivity(Date.now());
+      setInactivityCountdown(60);
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('click', resetTimer);
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('click', resetTimer);
+    };
+  }, []);
+
+  // Poll inactivity countdown
+  useEffect(() => {
+    if (browserApp !== 'admin' || !adminSession) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - lastActivity) / 1000);
+      const remaining = 60 - elapsed;
+      
+      if (remaining <= 0) {
+        // Trigger auto-logout!
+        localStorage.removeItem('png_jwt_token');
+        
+        // Push logout audit record
+        const logoutLog: LoginActivityLog = {
+          id: `log-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          email: adminSession.email,
+          status: 'Auto Logout (Inactivity)',
+          ipAddress: '103.220.145.' + Math.floor(Math.random() * 255),
+          userAgent: window.navigator.userAgent.substring(0, 50),
+          role: adminSession.role
+        };
+        setActivityLogs(prev => {
+          const updated = [logoutLog, ...prev];
+          saveStoredActivityLogs(updated);
+          return updated;
+        });
+
+        setAdminSession(null);
+        setInactivityCountdown(60);
+        alert('Workstation Session Warning: You have been logged out due to 60 seconds of inactivity.');
+      } else {
+        setInactivityCountdown(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [browserApp, adminSession, lastActivity]);
 
   // Infinite rotate slider banner timer
   useEffect(() => {
@@ -266,19 +384,167 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-gray-200 selection:bg-[#0066FF] selection:text-white pb-16 md:pb-0">
+    <div className="min-h-screen bg-[#07070B] text-gray-200 selection:bg-[#0066FF] selection:text-white flex flex-col font-sans pb-16 md:pb-0">
       
-      {/* Dynamic Header */}
-      <Navbar
-        currentTab={currentTab}
-        onNavigate={handleNavigate}
-        cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
-        wishlistCount={wishlist.length}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onSearchSubmit={handleSearchSubmit}
-        logoText={settings.shopName}
-      />
+      {/* 🚀 VIRTUAL DOUBLE-APP ENVIRONMENT CHROME BAR */}
+      <header className="bg-[#0A0A0F] border-b border-gray-900 sticky top-0 z-50 select-none">
+        
+        {/* Browser Tabs top layout */}
+        <div className="flex items-center justify-between px-3 pt-2.5 pb-2 bg-black/40 border-b border-gray-950">
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            
+            {/* Storefront Tab Tab */}
+            <button
+              onClick={() => {
+                setBrowserApp('store');
+                handleNavigate('home');
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition border truncate cursor-pointer ${
+                browserApp === 'store'
+                  ? 'bg-[#12121A] border-gray-800 text-white shadow-md'
+                  : 'bg-transparent border-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-900/40'
+              }`}
+            >
+              <Globe className="h-3.5 w-3.5 text-[#0066FF]" />
+              <span className="font-display uppercase tracking-wider text-[10px]">🌐 Client Shop UI</span>
+            </button>
+
+            {/* Admin Workspace Tab */}
+            <button
+              onClick={() => setBrowserApp('admin')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition border truncate cursor-pointer ${
+                browserApp === 'admin'
+                  ? 'bg-[#12121A] border-rose-950/40 text-white shadow-md'
+                  : 'bg-transparent border-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-900/40'
+              }`}
+            >
+              <Lock className="h-3.5 w-3.5 text-rose-500" />
+              <span className="font-display uppercase tracking-wider text-[10px]">🔒 Isolated Admin App</span>
+            </button>
+
+          </div>
+
+          {/* Activity countdown indicators */}
+          <div className="hidden sm:flex items-center gap-3">
+            {browserApp === 'admin' && adminSession && (
+              <span className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full animate-pulse">
+                <span className="h-1.5 w-1.5 bg-amber-500 rounded-full"></span>
+                Inactivity Logout: {inactivityCountdown}s
+              </span>
+            )}
+            <div className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full bg-red-500 opacity-80"></span>
+              <span className="h-2 w-2 rounded-full bg-yellow-500 opacity-80"></span>
+              <span className="h-2 w-2 rounded-full bg-emerald-500 opacity-80"></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Address and Command Bar */}
+        <div className="px-4 py-2 bg-gradient-to-b from-[#0A0A0F] to-black/80 flex items-center gap-2">
+          
+          <div className="flex gap-1.5">
+            <button 
+              onClick={() => {
+                setBrowserApp('store');
+                handleNavigate('home');
+              }}
+              className={`p-1.5 rounded-lg border text-gray-505 transition hover:text-white hover:bg-gray-900/60 cursor-pointer ${browserApp === 'store' ? 'border-gray-800' : 'border-transparent'}`}
+              title="Return to Shop Storefront"
+            >
+              <Globe className="h-3.5 w-3.5" />
+            </button>
+            <button 
+              onClick={() => setBrowserApp('admin')} 
+              className={`p-1.5 rounded-lg border text-gray-505 transition hover:text-white hover:bg-gray-900/60 cursor-pointer ${browserApp === 'admin' ? 'border-red-950/40' : 'border-transparent'}`}
+              title="Access Secured Admin CRM"
+            >
+              <Lock className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-center bg-gray-950/90 border border-gray-900 rounded-xl px-3 py-1 text-xs text-gray-400 font-mono">
+            <span className="text-emerald-500 mr-1 flex items-center">https://</span>
+            <span className="text-white font-bold">{browserApp === 'store' ? 'www.loyaltech-electronics.com' : 'admin.loyaltech-electronics.com'}</span>
+          </div>
+
+          <div className="text-[9px] uppercase font-bold text-gray-600 px-2.5 border-l border-gray-900 hidden md:block">
+            {browserApp === 'store' ? 'Public Node (Store)' : 'Secure Back-End'}
+          </div>
+
+        </div>
+
+      </header>
+
+      {/* RENDER VIEWPORT */}
+      {browserApp === 'admin' ? (
+        <div className="flex-1 flex flex-col bg-[#0A0A0F] min-h-screen">
+          
+          {/* SECURE ADMIN ROUTE BARRIER OR AUTH SHIELD */}
+          {adminSession ? (
+            <AdminPanel
+              products={products}
+              categories={categories}
+              brands={brands}
+              banners={banners}
+              orders={orders}
+              settings={settings}
+              coupons={coupons}
+              customers={customers}
+              adminUsers={adminUsers}
+              activityLogs={activityLogs}
+              currentUser={adminSession}
+              onUpdateProducts={setProducts}
+              onUpdateCategories={setCategories}
+              onUpdateBrands={setBrands}
+              onUpdateBanners={setBanners}
+              onUpdateSettings={setSettings}
+              onUpdateOrders={setOrders}
+              onUpdateCoupons={setCoupons}
+              onUpdateCustomers={setCustomers}
+              onUpdateAdminUsers={setAdminUsers}
+              onUpdateActivityLogs={setActivityLogs}
+              onLogout={() => {
+                // Log and terminate session
+                const logoutLog: LoginActivityLog = {
+                  id: `log-${Date.now()}`,
+                  timestamp: new Date().toISOString(),
+                  email: adminSession.email,
+                  status: 'Manual Logout',
+                  ipAddress: '103.220.145.' + Math.floor(Math.random() * 255),
+                  userAgent: window.navigator.userAgent.substring(0, 50),
+                  role: adminSession.role
+                };
+                setActivityLogs(prev => [logoutLog, ...prev]);
+                localStorage.removeItem('png_jwt_token');
+                setAdminSession(null);
+              }}
+            />
+          ) : (
+            <AdminAuth
+              onLoginSuccess={(user) => {
+                setAdminSession(user);
+              }}
+              logs={activityLogs}
+              onAddLog={(log) => setActivityLogs(prev => [log, ...prev])}
+            />
+          )}
+
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col min-h-screen">
+          
+          {/* Dynamic Header */}
+          <Navbar
+            currentTab={currentTab}
+            onNavigate={handleNavigate}
+            cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+            wishlistCount={wishlist.length}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onSearchSubmit={handleSearchSubmit}
+            logoText={settings.shopName}
+          />
 
       {/* --- HOMEPAGE VIEW --- */}
       {currentTab === 'home' && (
@@ -621,20 +887,34 @@ export default function App() {
 
       {/* --- CONTROL PANEL ADMIN --- */}
       {currentTab === 'admin' && (
-        <AdminPanel
-          products={products}
-          categories={categories}
-          brands={brands}
-          banners={banners}
-          orders={orders}
-          settings={settings}
-          onUpdateProducts={setProducts}
-          onUpdateCategories={setCategories}
-          onUpdateBrands={setBrands}
-          onUpdateBanners={setBanners}
-          onUpdateSettings={setSettings}
-          onUpdateOrders={setOrders}
-        />
+        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500 animate-bounce">
+            <Lock className="h-6 w-6" />
+          </div>
+          <h2 className="font-display text-lg font-bold text-white uppercase tracking-wider">Separate Application Node</h2>
+          <p className="mt-2 text-xs text-gray-400 font-sans leading-relaxed">
+            Security Protocol dictates that the **Admin Panel Workspace** has been completely isolated on its own domain server **admin.loyaltech-electronics.com**.
+          </p>
+          <p className="mt-1 text-xs text-[#0066FF] font-sans font-medium">
+            To view the backend console, please click the <strong>🔒 Isolated Admin App</strong> tab or use the virtual browser cockpit header above.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              onClick={() => handleNavigate('home')}
+              className="rounded-lg bg-gray-900 border border-gray-800 px-4 py-2 text-xs font-bold text-gray-300 hover:text-white hover:bg-gray-805 transition cursor-pointer"
+            >
+              Back to Storefront
+            </button>
+            <button
+              onClick={() => {
+                setBrowserApp('admin');
+              }}
+              className="rounded-lg bg-rose-950/40 border border-rose-800/30 px-4 py-2 text-xs font-bold text-white hover:bg-rose-900/30 transition cursor-pointer"
+            >
+              Access Admin App Node
+            </button>
+          </div>
+        </div>
       )}
 
       {/* --- BOTTOM FLOATING TELEMETRY FOOTER --- */}
@@ -711,6 +991,9 @@ export default function App() {
         wishlistCount={wishlist.length}
         openSearchTrigger={() => setSearchQuery('')}
       />
+
+        </div>
+      )}
 
     </div>
   );

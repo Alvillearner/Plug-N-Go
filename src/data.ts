@@ -58,7 +58,12 @@ export const DEFAULT_SETTINGS: AdminSettings = {
   instagramLink: 'https://instagram.com/plugngo.bd',
   logoText: 'PLUG N GO',
   seoTitle: 'PLUG N GO | Premium Electronics Shop in Bangladesh',
-  seoDescription: 'Find genuine mobile devices, premium sound hubs, hypergaming accessories & fast chargers at PLUG N GO Bangladesh. Convenient automated order generation via WhatsApp!'
+  seoDescription: 'Find genuine mobile devices, premium sound hubs, hypergaming accessories & fast chargers at PLUG N GO Bangladesh. Convenient automated order generation via WhatsApp!',
+  paymentGatewayEnabled: true,
+  manualPaymentInstructions: 'Please complete payment sending to our official bKash or Nagad Merchant Number: +8801312023489 (Use reference: {ORDER_ID})',
+  notifyOnNewOrder: true,
+  notifyEmail: 'admin@loyaltech.com',
+  couponUsageLimit: 100
 };
 
 export const DEFAULT_PRODUCTS: Product[] = [
