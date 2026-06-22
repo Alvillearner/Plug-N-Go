@@ -1,0 +1,6 @@
+{
+  "name": "PLUG N GO",
+  "description": "Premium, responsive electronics e-commerce website for PLUG N GO, a Bangladeshi electronics shop with BDT currency, offline cart, and WhatsApp order completion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
