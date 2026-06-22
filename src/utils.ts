@@ -30,31 +30,31 @@ export function getWhatsAppUrl(phoneNumber: string, message: string): string {
 // Create order message for a single product direct checkout
 export function buildSingleProductMessage(product: Product, quantity: number, variant?: string, note?: string): string {
   const finalPrice = product.price * quantity;
-  return `🛒 *PLUG N GO — Order Request*
+  const formattedPrice = new Intl.NumberFormat('en-IN').format(finalPrice);
+  return `⚡ PLUG N GO — Order Request
 
 📦 Product: ${product.name}
-💰 Price: ${formatBDT(product.price)}
+💰 Price: ৳ ${formattedPrice}
 🔢 Quantity: ${quantity}
-🎨 Variant: ${variant || 'No specific color/spec selected'}
-${note ? `📝 Note: ${note}\n` : ''}
-⚡ Total: ${formatBDT(finalPrice)}
+🎨 Variant: ${variant || 'None'}${note ? `\n📝 Note: ${note}` : ''}
 
-Please confirm my order. Thank you! ⚡`;
+Please confirm my order. Thank you!`;
 }
 
 // Create order message for multiple list items (Cart Checkout)
 export function buildCartOrderMessage(items: { product: Product; quantity: number; selectedVariant?: string }[], totalPrice: number, note?: string): string {
-  let itemsText = '';
-  items.forEach((item, index) => {
-    itemsText += `${index + 1}. *${item.product.name}*\n   🔢 Qty: ${item.quantity} | 💰 Unit: ${formatBDT(item.product.price)}${item.selectedVariant ? ` | 🎨 Spec: ${item.selectedVariant}` : ''}\n\n`;
-  });
+  const productsSummary = items.map((item) => `${item.product.name} (Qty: ${item.quantity}${item.selectedVariant ? `, Variant: ${item.selectedVariant}` : ''})`).join(', ');
+  const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+  const formattedPrice = new Intl.NumberFormat('en-IN').format(totalPrice);
+  
+  return `⚡ PLUG N GO — Order Request
 
-  return `🛒 *PLUG N GO — Multi-Product Order Request*
+📦 Product: ${productsSummary}
+💰 Price: ৳ ${formattedPrice}
+🔢 Quantity: ${totalQty}
+🎨 Variant: Refer to product details above${note ? `\n📝 Note: ${note}` : ''}
 
-🛍️ *Order Items:*
-${itemsText}💵 *Subtotal:* ${formatBDT(totalPrice)}
-${note ? `📝 *Customer Note:* ${note}\n` : ''}
-Please confirm my order. Thank you! ⚡`;
+Please confirm my order. Thank you!`;
 }
 
 // LocalStorage Persistence Handlers
@@ -63,8 +63,8 @@ export function getStoredSettings(): AdminSettings {
   if (data) {
     try {
       const parsed = JSON.parse(data);
-      if (parsed && (parsed.whatsappNumber === '8801712345678' || parsed.whatsappNumber === '1712345678' || parsed.whatsappNumber === '01895292208')) {
-        parsed.whatsappNumber = '01312023489';
+      if (parsed && (parsed.whatsappNumber === '8801712345678' || parsed.whatsappNumber === '1712345678' || parsed.whatsappNumber === '01895292208' || parsed.whatsappNumber === '01312023489')) {
+        parsed.whatsappNumber = '8801312023489';
         localStorage.setItem('png_settings', JSON.stringify(parsed));
       }
       return parsed;

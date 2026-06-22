@@ -52,7 +52,7 @@ export const DEFAULT_BANNERS: Banner[] = [
 
 export const DEFAULT_SETTINGS: AdminSettings = {
   shopName: 'PLUG N GO',
-  whatsappNumber: '01312023489', // Default Bangladeshi number
+  whatsappNumber: '8801312023489', // Default Bangladeshi number
   address: 'Level 4, Zone A, Jamuna Future Park, Dhaka, Bangladesh',
   facebookLink: 'https://facebook.com/plugngo.bd',
   instagramLink: 'https://instagram.com/plugngo.bd',
