@@ -121,33 +121,92 @@ export default function App() {
   // Active banner slide index
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
-  // Sync state modifications to disk
+  // --- SYNC ENGINE AND MULTI-DEVICE PERSISTENCE HANDLERS ---
+  const [isSyncLoaded, setIsSyncLoaded] = useState(false);
+
+  const syncToServer = (key: string, value: any) => {
+    if (!isSyncLoaded) return; // Prevent initial double sync
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        const txt = await res.text();
+        console.warn(`[DB-SYNC-ERROR] Refusing backup for key "${key}":`, txt);
+      }
+    })
+    .catch((err) => {
+      console.warn(`[DB-SYNC-ERROR] Server offline or disconnected inside sandbox:`, err);
+    });
+  };
+
+  // Initial pull on boot from server-side JSON database
+  useEffect(() => {
+    fetch('/api/store-data')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log('[DEBUG] Server-side remote database parsed successfully:', data);
+        if (data.settings) setSettings(data.settings);
+        if (data.products) setProducts(data.products);
+        if (data.categories) setCategories(data.categories);
+        if (data.brands) setBrands(data.brands);
+        if (data.banners) setBanners(data.banners);
+        if (data.orders) setOrders(data.orders);
+        if (data.reviews) setReviews(data.reviews);
+        if (data.coupons) setCoupons(data.coupons);
+        if (data.customers) setCustomers(data.customers);
+        if (data.adminUsers) setAdminUsers(data.adminUsers);
+        if (data.activityLogs) setActivityLogs(data.activityLogs);
+        
+        // Mark sync ready
+        setIsSyncLoaded(true);
+      })
+      .catch(err => {
+        console.error('[ERROR] Central server storage unavailable. Standard off-line state retained:', err);
+        // Fallback to offline mode
+        setIsSyncLoaded(true);
+      });
+  }, []);
+
+  // Sync state modifications to disk & central database
   useEffect(() => {
     saveStoredSettings(settings);
+    syncToServer('settings', settings);
   }, [settings]);
 
   useEffect(() => {
     saveStoredProducts(products);
+    syncToServer('products', products);
   }, [products]);
 
   useEffect(() => {
     saveStoredCategories(categories);
+    syncToServer('categories', categories);
   }, [categories]);
 
   useEffect(() => {
     saveStoredBrands(brands);
+    syncToServer('brands', brands);
   }, [brands]);
 
   useEffect(() => {
     saveStoredBanners(banners);
+    syncToServer('banners', banners);
   }, [banners]);
 
   useEffect(() => {
     saveStoredOrders(orders);
+    syncToServer('orders', orders);
   }, [orders]);
 
   useEffect(() => {
     saveStoredReviews(reviews);
+    syncToServer('reviews', reviews);
   }, [reviews]);
 
   useEffect(() => {
@@ -160,18 +219,22 @@ export default function App() {
 
   useEffect(() => {
     saveStoredCoupons(coupons);
+    syncToServer('coupons', coupons);
   }, [coupons]);
 
   useEffect(() => {
     saveStoredCustomers(customers);
+    syncToServer('customers', customers);
   }, [customers]);
 
   useEffect(() => {
     saveStoredAdminUsers(adminUsers);
+    syncToServer('adminUsers', adminUsers);
   }, [adminUsers]);
 
   useEffect(() => {
     saveStoredActivityLogs(activityLogs);
+    syncToServer('activityLogs', activityLogs);
   }, [activityLogs]);
 
   // Sync back and forth navigation address updates
