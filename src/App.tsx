@@ -98,10 +98,6 @@ export default function App() {
     return null;
   });
 
-  // --- AUTO INACTIVITY LOGOUT ENGINE (60 Seconds Timeout) ---
-  const [lastActivity, setLastActivity] = useState<number>(() => Date.now());
-  const [inactivityCountdown, setInactivityCountdown] = useState<number>(60);
-
   // --- INTERACTION STATES ---
   const [currentTab, setCurrentTab] = useState<string>('home');
   const [selectedProductSlug, setSelectedProductSlug] = useState<string>('');
@@ -245,63 +241,6 @@ export default function App() {
       setBrowserUrl('https://admin.loyaltech-electronics.com');
     }
   }, [browserApp]);
-
-  // Track user movements for session longevity
-  useEffect(() => {
-    const resetTimer = () => {
-      setLastActivity(Date.now());
-      setInactivityCountdown(60);
-    };
-
-    window.addEventListener('mousemove', resetTimer);
-    window.addEventListener('keydown', resetTimer);
-    window.addEventListener('click', resetTimer);
-
-    return () => {
-      window.removeEventListener('mousemove', resetTimer);
-      window.removeEventListener('keydown', resetTimer);
-      window.removeEventListener('click', resetTimer);
-    };
-  }, []);
-
-  // Poll inactivity countdown
-  useEffect(() => {
-    if (browserApp !== 'admin' || !adminSession) return;
-
-    const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - lastActivity) / 1000);
-      const remaining = 60 - elapsed;
-      
-      if (remaining <= 0) {
-        // Trigger auto-logout!
-        localStorage.removeItem('png_jwt_token');
-        
-        // Push logout audit record
-        const logoutLog: LoginActivityLog = {
-          id: `log-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          email: adminSession.email,
-          status: 'Auto Logout (Inactivity)',
-          ipAddress: '103.220.145.' + Math.floor(Math.random() * 255),
-          userAgent: window.navigator.userAgent.substring(0, 50),
-          role: adminSession.role
-        };
-        setActivityLogs(prev => {
-          const updated = [logoutLog, ...prev];
-          saveStoredActivityLogs(updated);
-          return updated;
-        });
-
-        setAdminSession(null);
-        setInactivityCountdown(60);
-        alert('Workstation Session Warning: You have been logged out due to 60 seconds of inactivity.');
-      } else {
-        setInactivityCountdown(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [browserApp, adminSession, lastActivity]);
 
   // Infinite rotate slider banner timer
   useEffect(() => {
@@ -489,12 +428,6 @@ export default function App() {
 
           {/* Activity countdown indicators */}
           <div className="hidden sm:flex items-center gap-3">
-            {browserApp === 'admin' && adminSession && (
-              <span className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full animate-pulse">
-                <span className="h-1.5 w-1.5 bg-amber-500 rounded-full"></span>
-                Inactivity Logout: {inactivityCountdown}s
-              </span>
-            )}
             <div className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-red-500 opacity-80"></span>
               <span className="h-2 w-2 rounded-full bg-yellow-500 opacity-80"></span>

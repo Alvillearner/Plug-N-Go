@@ -1646,7 +1646,6 @@ export default function AdminPanel({
                   name,
                   email,
                   role,
-                  isTwoFactorEnabled: false,
                   status: 'Active'
                 };
 
@@ -1677,7 +1676,7 @@ export default function AdminPanel({
             </div>
 
             {/* TEAM LIST ROSTER */}
-            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 lg:col-span-2 space-y-6">
+            <div className="rounded-xl border border-gray-800 bg-[#0E0E15] p-5 lg:col-span-2">
               <div>
                 <div className="border-b border-gray-900 pb-3 mb-4">
                   <h3 className="font-display font-black text-sm uppercase text-gray-200 tracking-wider">Workforce authorization list</h3>
@@ -1700,38 +1699,6 @@ export default function AdminPanel({
                   ))}
                 </div>
               </div>
-
-              {/* SECURITY ACTIVITY LOGS OVERVIEW */}
-              <div>
-                <div className="border-b border-gray-900 pb-2 mb-3 flex items-center gap-1.5">
-                  <Clock className="h-4.5 w-4.5 text-amber-500" />
-                  <h3 className="font-display font-bold text-xs uppercase text-gray-300 tracking-wide">Login security audit logs</h3>
-                </div>
-
-                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 text-[11px]">
-                  {activityLogs.map((log) => (
-                    <div key={log.id} className="p-2 border border-gray-950 bg-gray-950/20 rounded flex justify-between items-start">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[10px] text-gray-500">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                          <span className="font-bold text-gray-300">{log.email}</span>
-                        </div>
-                        <p className="text-[10px] text-gray-500 leading-none">{log.userAgent} • IP: {log.ipAddress}</p>
-                      </div>
-                      <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                        log.status === 'Success' 
-                          ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/10' 
-                          : log.status === 'Failed'
-                          ? 'bg-red-950 text-red-500 border border-red-800/10'
-                          : 'bg-indigo-950 text-indigo-400 border border-indigo-800/10'
-                      }`}>
-                        {log.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
             </div>
 
           </div>

@@ -101,8 +101,8 @@ export interface AdminUser {
   name: string;
   email: string;
   role: 'Super Admin' | 'Admin' | 'Staff';
-  isTwoFactorEnabled: boolean;
   status: 'Active' | 'Suspended';
+  passwordHash?: string;
 }
 
 export interface LoginActivityLog {

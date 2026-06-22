@@ -198,15 +198,12 @@ export const DEFAULT_CUSTOMERS: Customer[] = [
 ];
 
 export const DEFAULT_ADMIN_USERS: AdminUser[] = [
-  { id: 'user-admin', name: 'Super Admin', email: 'admin@loyaltech.com', role: 'Super Admin', isTwoFactorEnabled: false, status: 'Active' },
-  { id: 'user-manager', name: 'Nayeem Islam', email: 'manager@loyaltech.com', role: 'Admin', isTwoFactorEnabled: false, status: 'Active' },
-  { id: 'user-staff', name: 'Taskin Ahmed', email: 'staff@loyaltech.com', role: 'Staff', isTwoFactorEnabled: false, status: 'Active' }
+  { id: 'user-admin', name: 'Super Admin', email: 'admin@lplugngo.com', role: 'Super Admin', status: 'Active' },
+  { id: 'user-manager', name: 'Nayeem Islam', email: 'manager@lplugngo.com', role: 'Admin', status: 'Active' },
+  { id: 'user-staff', name: 'Taskin Ahmed', email: 'staff@lplugngo.com', role: 'Staff', status: 'Active' }
 ];
 
-export const DEFAULT_ACTIVITY_LOGS: LoginActivityLog[] = [
-  { id: 'log-1', timestamp: '2026-06-21T10:14:00-07:00', email: 'admin@loyaltech.com', status: 'Success', ipAddress: '103.114.172.90', userAgent: 'Mozilla/5.0 Chrome/121.0', role: 'Super Admin' },
-  { id: 'log-2', timestamp: '2026-06-21T14:22:00-07:00', email: 'staff@loyaltech.com', status: 'Success', ipAddress: '103.114.172.92', userAgent: 'Mozilla/5.0 Safari/17.2', role: 'Staff' }
-];
+export const DEFAULT_ACTIVITY_LOGS: LoginActivityLog[] = [];
 
 export function getStoredCoupons(): Coupon[] {
   const data = localStorage.getItem('png_coupons');
