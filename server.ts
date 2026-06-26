@@ -45,16 +45,38 @@ async function startServer() {
 
   // Helper to load database from disk or seed default state
   function loadDb() {
+    // Utility to map/normalize product data according to DB requirements
+    const normalizeProducts = (prods: any[], cats: any[]) => {
+      return prods.map((p: any) => {
+        const featuredImage = p.featuredImage || p.images?.[0] || '';
+        const galleryImages = p.galleryImages || (p.images ? p.images.slice(1) : []);
+        const matchedCat = cats.find((c: any) => c.id === p.categoryId);
+        const category = p.category || (matchedCat ? matchedCat.name : (p.categoryId || 'General'));
+        const createdAt = p.createdAt || new Date('2026-06-21T10:00:00Z').toISOString();
+        
+        return {
+          ...p,
+          featuredImage,
+          galleryImages,
+          category,
+          createdAt,
+          // Maintain compatibility with older components
+          images: p.images || [featuredImage, ...galleryImages].filter(Boolean)
+        };
+      });
+    };
+
     if (fs.existsSync(DB_FILE)) {
       try {
         const content = fs.readFileSync(DB_FILE, 'utf8');
         const parsed = JSON.parse(content);
         // Ensure all required fields exist
         if (parsed && typeof parsed === 'object') {
+          const loadedCategories = parsed.categories ?? DEFAULT_CATEGORIES;
           const loaded = {
             settings: parsed.settings ?? DEFAULT_SETTINGS,
-            products: parsed.products ?? DEFAULT_PRODUCTS,
-            categories: parsed.categories ?? DEFAULT_CATEGORIES,
+            products: normalizeProducts(parsed.products ?? DEFAULT_PRODUCTS, loadedCategories),
+            categories: loadedCategories,
             brands: parsed.brands ?? DEFAULT_BRANDS,
             banners: parsed.banners ?? DEFAULT_BANNERS,
             orders: parsed.orders ?? DEFAULT_ORDERS,
@@ -74,9 +96,8 @@ async function startServer() {
             }
           });
 
-          if (modified) {
-            saveDb(loaded);
-          }
+          // Write normalized products back to DB if needed
+          saveDb(loaded);
 
           return loaded;
         }
@@ -88,7 +109,7 @@ async function startServer() {
     // Initialize with default datasets from client source code
     const initialDb = {
       settings: DEFAULT_SETTINGS,
-      products: DEFAULT_PRODUCTS,
+      products: normalizeProducts(DEFAULT_PRODUCTS, DEFAULT_CATEGORIES),
       categories: DEFAULT_CATEGORIES,
       brands: DEFAULT_BRANDS,
       banners: DEFAULT_BANNERS,

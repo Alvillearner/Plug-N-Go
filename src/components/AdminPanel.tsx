@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Product, Category, Brand, Banner, AdminSettings, WhatsAppOrder, Coupon, Customer, AdminUser, LoginActivityLog } from '../types';
 import { formatBDT } from '../utils';
+import ProductImageUploader from './ProductImageUploader';
 
 interface AdminPanelProps {
   products: Product[];
@@ -153,6 +154,13 @@ export default function AdminPanel({
     e.preventDefault();
     if (!newProduct.name || !newProduct.price) return;
 
+    // Enforce that at least one image must be uploaded
+    const uploadedImages = (newProduct.images || []).filter(Boolean);
+    if (uploadedImages.length === 0) {
+      alert('Validation Error: Please upload at least one product image using the Media Gallery Manager.');
+      return;
+    }
+
     const generatedId = `prod-${Math.floor(1000 + Math.random() * 9000)}`;
     const slug = newProduct.slug || newProduct.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     
@@ -161,16 +169,20 @@ export default function AdminPanel({
       'Origin': 'Official Manufacturer'
     };
 
-    const finalImage = newProduct.images?.[0] || 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=600';
+    const finalImages = uploadedImages;
+    const featuredImage = finalImages[0];
+    const galleryImages = finalImages.slice(1);
+    const selectedCat = categories.find(c => c.id === newProduct.categoryId) || categories[0];
+    const categoryName = selectedCat ? selectedCat.name : 'Accessories';
 
     const p: Product = {
       id: generatedId,
       name: newProduct.name,
       slug: slug,
-      description: newProduct.description || 'Premium genuine accessories supplied from JFP outlet.',
+      description: newProduct.description || 'Premium genuine electronics and accessories.',
       price: Number(newProduct.price),
       originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
-      images: [finalImage],
+      images: finalImages,
       categoryId: newProduct.categoryId || categories[0]?.id || 'cat-accessories',
       brandId: newProduct.brandId || brands[0]?.id || 'brand-anker',
       stock: Number(newProduct.stock ?? 10),
@@ -181,7 +193,13 @@ export default function AdminPanel({
       isNewArrival: !!newProduct.isNewArrival,
       inFlashSale: !!newProduct.inFlashSale,
       variants: newProduct.variants || ['Black', 'White'],
-      specifications: builtSpecs
+      specifications: builtSpecs,
+      
+      // New Image Management & DB attributes
+      featuredImage: featuredImage,
+      galleryImages: galleryImages,
+      category: categoryName,
+      createdAt: new Date().toISOString()
     };
 
     onUpdateProducts([p, ...products]);
@@ -194,7 +212,7 @@ export default function AdminPanel({
       description: '',
       price: 0,
       stock: 10,
-      images: [''],
+      images: [],
       rating: 4.8
     });
     alert('Product added successfully!');
@@ -216,8 +234,28 @@ export default function AdminPanel({
     e.preventDefault();
     if (!editingProduct) return;
 
-    const updated = products.map((p) => (p.id === editingProduct.id ? editingProduct : p));
-    onUpdateProducts(updated);
+    const uploadedImages = (editingProduct.images || []).filter(Boolean);
+    if (uploadedImages.length === 0) {
+      alert('Validation Error: Please upload at least one product image using the Media Gallery Manager.');
+      return;
+    }
+
+    const featuredImage = uploadedImages[0];
+    const galleryImages = uploadedImages.slice(1);
+    const selectedCat = categories.find(c => c.id === editingProduct.categoryId);
+    const categoryName = selectedCat ? selectedCat.name : 'Accessories';
+
+    const updated: Product = {
+      ...editingProduct,
+      images: uploadedImages,
+      featuredImage,
+      galleryImages,
+      category: categoryName,
+      createdAt: editingProduct.createdAt || new Date().toISOString()
+    };
+
+    const updatedList = products.map((p) => (p.id === editingProduct.id ? updated : p));
+    onUpdateProducts(updatedList);
     setEditingProduct(null);
     alert('Product modified successfully!');
   };
@@ -572,28 +610,38 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Demo Image Link</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingProduct.images[0]}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, images: [e.target.value] })}
-                    className="w-full rounded border border-gray-800 bg-[#0E0E15] px-3 py-1.5 text-xs text-white"
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 bg-[#0A0A10] p-4 rounded-xl border border-gray-900">
+                  <ProductImageUploader
+                    images={editingProduct.images || []}
+                    onChange={(newImgs) => setEditingProduct({ ...editingProduct, images: newImgs })}
                   />
                 </div>
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Category Parent</label>
-                  <select
-                    value={editingProduct.categoryId}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, categoryId: e.target.value })}
-                    className="w-full rounded border border-gray-800 bg-[#0E0E15] px-3 py-1.5 text-xs text-white"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Category Parent</label>
+                    <select
+                      value={editingProduct.categoryId}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, categoryId: e.target.value })}
+                      className="w-full rounded border border-gray-800 bg-[#0E0E15] px-3 py-2 text-xs text-white focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none"
+                    >
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Product Brand</label>
+                    <select
+                      value={editingProduct.brandId}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, brandId: e.target.value })}
+                      className="w-full rounded border border-gray-800 bg-[#0E0E15] px-3 py-2 text-xs text-white focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none"
+                    >
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -661,39 +709,36 @@ export default function AdminPanel({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Single Image URL</label>
-                  <input
-                    type="text"
-                    placeholder="https://images.unsplash.com/..."
-                    value={newProduct.images?.[0] || ''}
-                    onChange={(e) => setNewProduct({ ...newProduct, images: [e.target.value] })}
-                    className="w-full rounded border border-gray-800 bg-[#12121A] px-3 py-1.5 text-[#EEE]"
+                <div className="md:col-span-2 bg-[#0A0A10] p-4 rounded-xl border border-gray-900">
+                  <ProductImageUploader
+                    images={newProduct.images || []}
+                    onChange={(newImgs) => setNewProduct({ ...newProduct, images: newImgs })}
                   />
                 </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Catalog Category</label>
+                    <select
+                      value={newProduct.categoryId}
+                      onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
+                      className="w-full rounded border border-gray-800 bg-[#12121A] px-3 py-2 text-gray-300 focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none"
+                    >
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Catalog Category</label>
-                  <select
-                    value={newProduct.categoryId}
-                    onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
-                    className="w-full rounded border border-gray-800 bg-[#12121A] px-3 py-1.5 text-gray-300"
-                  >
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Initial Stock quantity</label>
-                  <input
-                    type="number"
-                    placeholder="15"
-                    value={newProduct.stock ?? ''}
-                    onChange={(e) => setNewProduct({ ...newProduct, stock: Number(e.target.value) })}
-                    className="w-full rounded border border-gray-800 bg-[#12121A] px-3 py-1.5 text-[#EEE]"
-                  />
+                  <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-400 block mb-1">Initial Stock quantity</label>
+                    <input
+                      type="number"
+                      placeholder="15"
+                      value={newProduct.stock ?? ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, stock: Number(e.target.value) })}
+                      className="w-full rounded border border-gray-800 bg-[#12121A] px-3 py-2 text-[#EEE] focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -768,7 +813,15 @@ export default function AdminPanel({
                 {products.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-900/20 text-gray-300">
                     <td className="py-3.5 px-4 flex items-center space-x-3 max-w-xs">
-                      <img src={p.images[0]} alt="" className="h-9 w-9 rounded-lg object-cover bg-[#161622]" />
+                      <img 
+                        src={p.images[0]} 
+                        alt="" 
+                        className="h-9 w-9 rounded-lg object-cover bg-[#161622]" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).onerror = null;
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=150';
+                        }}
+                      />
                       <div className="overflow-hidden">
                         <span className="font-bold text-gray-100 block text-ellipsis overflow-hidden line-clamp-1">{p.name}</span>
                         <span className="text-[9px] text-[#FF6B00] inline-block mt-0.5">{p.id}</span>
@@ -1000,7 +1053,15 @@ export default function AdminPanel({
             {banners.map((ban) => (
               <div key={ban.id} className="rounded-xl border border-gray-800 bg-[#0E0E15] p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div className="flex items-center space-x-3">
-                  <img src={ban.imageUrl} alt="" className="h-14 w-28 object-cover rounded bg-gray-900" />
+                  <img 
+                    src={ban.imageUrl} 
+                    alt="" 
+                    className="h-14 w-28 object-cover rounded bg-gray-900" 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).onerror = null;
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=300';
+                    }}
+                  />
                   <div>
                     <span className="font-bold text-white block text-sm">{ban.title}</span>
                     <span className="text-[10px] text-gray-500 block">{ban.subtitle}</span>
@@ -1273,7 +1334,15 @@ export default function AdminPanel({
                     return (
                       <tr key={p.id} className="hover:bg-gray-900/10 transition">
                         <td className="p-3 flex items-center gap-2">
-                          <img src={p.images[0]} className="h-8 w-8 rounded-md object-cover border border-gray-800" referrerPolicy="no-referrer" />
+                          <img 
+                            src={p.images[0]} 
+                            className="h-8 w-8 rounded-md object-cover border border-gray-800" 
+                            referrerPolicy="no-referrer" 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).onerror = null;
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=150';
+                            }}
+                          />
                           <span className="font-bold text-gray-200">{p.name}</span>
                         </td>
                         <td className="p-3 font-mono text-[11px] text-gray-500">{p.id}</td>
@@ -1596,7 +1665,15 @@ export default function AdminPanel({
                   <div key={p.id} className="flex items-center justify-between border-b border-gray-950 pb-2.5 last:border-0 last:pb-0">
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600 font-display font-black text-sm w-4">#{idx+1}</span>
-                      <img src={p.images[0]} className="h-8 w-8 rounded object-cover border border-gray-900" referrerPolicy="no-referrer" />
+                      <img 
+                        src={p.images[0]} 
+                        className="h-8 w-8 rounded object-cover border border-gray-900" 
+                        referrerPolicy="no-referrer" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).onerror = null;
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=150';
+                        }}
+                      />
                       <div>
                         <span className="text-gray-200 font-bold block">{p.name}</span>
                         <span className="text-[10px] text-gray-500">{p.id}</span>

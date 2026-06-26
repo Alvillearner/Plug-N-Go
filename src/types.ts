@@ -22,6 +22,12 @@ export interface Product {
   inFlashSale: boolean;
   variants?: string[]; // e.g. ["Black", "White", "Navy Blue", "Slate Grey"]
   specifications?: Record<string, string>; // e.g. {"Battery": "5000mAh", "Screen": "6.7 inch AMOLED"}
+  
+  // New Product Image Management and Db Structure requirements
+  featuredImage?: string;
+  galleryImages?: string[];
+  category?: string; // name or ID of category
+  createdAt?: string;
 }
 
 export interface Category {

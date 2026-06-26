@@ -938,6 +938,10 @@ export function CartView({
                       alt={item.product.name} 
                       className="h-full w-full object-cover"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).onerror = null;
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=150';
+                      }}
                     />
                   </div>
                   <div>

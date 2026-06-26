@@ -118,13 +118,29 @@ export default function App() {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
 
   // --- SYNC ENGINE AND MULTI-DEVICE PERSISTENCE HANDLERS ---
+  const lastSyncedState = React.useRef<Record<string, string>>({});
   const [isSyncLoaded, setIsSyncLoaded] = useState(false);
 
   const syncToServer = (key: string, value: any) => {
     if (!isSyncLoaded) return; // Prevent initial double sync
+    
+    const stringified = JSON.stringify(value);
+    if (lastSyncedState.current[key] === stringified) {
+      // Local state matches remote or recently synced state, skip redundant POST
+      return;
+    }
+    
+    // Update tracking cache to suppress infinite loopbacks
+    lastSyncedState.current[key] = stringified;
+
     fetch('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      },
       body: JSON.stringify({ key, value })
     })
     .then(async (res) => {
@@ -134,39 +150,74 @@ export default function App() {
       }
     })
     .catch((err) => {
-      console.warn(`[DB-SYNC-ERROR] Server offline or disconnected inside sandbox:`, err);
+      console.error(`[DB-SYNC-ERROR] Failed to post synced state for "${key}" to the API endpoint:`, err);
     });
   };
 
-  // Initial pull on boot from server-side JSON database
+  // Real-time automatic data fetching & revalidation interval
   useEffect(() => {
-    fetch('/api/store-data')
-      .then(res => {
-        if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
-        console.log('[DEBUG] Server-side remote database parsed successfully:', data);
-        if (data.settings) setSettings(data.settings);
-        if (data.products) setProducts(data.products);
-        if (data.categories) setCategories(data.categories);
-        if (data.brands) setBrands(data.brands);
-        if (data.banners) setBanners(data.banners);
-        if (data.orders) setOrders(data.orders);
-        if (data.reviews) setReviews(data.reviews);
-        if (data.coupons) setCoupons(data.coupons);
-        if (data.customers) setCustomers(data.customers);
-        if (data.adminUsers) setAdminUsers(data.adminUsers);
-        if (data.activityLogs) setActivityLogs(data.activityLogs);
-        
-        // Mark sync ready
-        setIsSyncLoaded(true);
-      })
-      .catch(err => {
-        console.error('[ERROR] Central server storage unavailable. Standard off-line state retained:', err);
-        // Fallback to offline mode
-        setIsSyncLoaded(true);
-      });
+    const performFetch = (silent = false) => {
+      const fetchOptions = {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      };
+
+      return fetch(`/api/store-data?t=${Date.now()}`, fetchOptions)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`[API-ERROR] Fetching store data failed with HTTP status: ${res.status}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (!silent) {
+            console.log('[DEBUG-REALTIME] Shared API database fetched successfully:', data);
+          }
+
+          // Helper to safely apply remote states without triggering redundant state cycles
+          const updateIfChanged = (key: string, remoteVal: any, setter: (val: any) => void) => {
+            if (!remoteVal) return;
+            const strVal = JSON.stringify(remoteVal);
+            if (lastSyncedState.current[key] !== strVal) {
+              lastSyncedState.current[key] = strVal;
+              setter(remoteVal);
+            }
+          };
+
+          updateIfChanged('settings', data.settings, setSettings);
+          updateIfChanged('products', data.products, setProducts);
+          updateIfChanged('categories', data.categories, setCategories);
+          updateIfChanged('brands', data.brands, setBrands);
+          updateIfChanged('banners', data.banners, setBanners);
+          updateIfChanged('orders', data.orders, setOrders);
+          updateIfChanged('reviews', data.reviews, setReviews);
+          updateIfChanged('coupons', data.coupons, setCoupons);
+          updateIfChanged('customers', data.customers, setCustomers);
+          updateIfChanged('adminUsers', data.adminUsers, setAdminUsers);
+          updateIfChanged('activityLogs', data.activityLogs, setActivityLogs);
+
+          setIsSyncLoaded(true);
+        })
+        .catch(err => {
+          console.error('[REALTIME-FETCH-ERROR] Real-time revalidation / polling failed for API request:', err);
+          setIsSyncLoaded(true);
+        });
+    };
+
+    // Load instantly on boot
+    performFetch(false);
+
+    // Setup periodic polling check every 5 seconds
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        performFetch(true);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Sync state modifications to disk & central database
@@ -557,6 +608,10 @@ export default function App() {
                   alt={banners[activeBannerIndex]?.title}
                   className="h-full w-full object-cover opacity-60 transition-transform duration-1000 scale-102"
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).onerror = null;
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=1200';
+                  }}
                 />
                 
                 <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 sm:p-12 lg:p-16 max-w-4xl">

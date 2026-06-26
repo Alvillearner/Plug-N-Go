@@ -92,6 +92,10 @@ export default function ProductCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           referrerPolicy="no-referrer"
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).onerror = null;
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=600';
+          }}
         />
         {isOutOfStock && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-[2px]">

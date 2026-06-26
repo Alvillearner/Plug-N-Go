@@ -60,6 +60,10 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
               : undefined
           }
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            (e.target as HTMLImageElement).onerror = null;
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=600';
+          }}
         />
 
         {/* Carousel buttons details (Only render if more than 1 image) */}
@@ -104,6 +108,10 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
                 alt={`${productName} thumbnail ${i + 1}`}
                 className="h-full w-full object-cover"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).onerror = null;
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&q=80&w=100';
+                }}
               />
             </button>
           ))}
